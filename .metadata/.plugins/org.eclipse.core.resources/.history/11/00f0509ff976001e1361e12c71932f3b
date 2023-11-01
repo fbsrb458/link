@@ -1,0 +1,68 @@
+package com.myweb.www.security;
+
+import java.io.IOException;
+
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.web.DefaultRedirectStrategy;
+import org.springframework.security.web.RedirectStrategy;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.stereotype.Component;
+
+import com.myweb.www.service.MemberService;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
+
+@Slf4j
+@Component //내가 만든 핸둘러
+public class LoginSuccessHandler implements AuthenticationSuccessHandler {
+	
+	//가야하는 경로
+	@Getter
+	@Setter
+	private String authEmail;
+	
+	//가야하는 경로
+	@Getter
+	@Setter
+	private String authUrl;
+	
+	//redCache(실제정보) 정보를가지고 rdstg가 감 ,requsetdispatcher의 유사
+	
+	// RedirectStrategy : 실제 경로로 데이터를 가지고 리다이렉트 해줌	
+	// redirect로 데이터를 가져가는 역할 (리다이렉트 스트레터치)
+	private RedirectStrategy rdstg = new DefaultRedirectStrategy();
+	//실체 로그인 정보, 경로 등을 저장
+	//RequestCache : 내가 로그인한 정보 저장(섹션 객체로)
+	private RequestCache reqCache = new HttpSessionRequestCache();
+	
+	//db 처리위한 서비스 객체
+	@Inject
+	private MemberService msv;
+	
+	@Override 
+	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+			Authentication authentication) throws IOException, ServletException {
+		setAuthEmail(authentication.getName());
+		setAuthUrl("/board/list"); //어디로 갈건지 정하는곳
+		
+		//이미 로그인 성공한거임
+		boolean isOk = msv.updateLastLogin(getAuthEmail());
+		
+		//내부에서 로그인 세션 저장된
+		HttpSession ses = request.getSession(); //해당 세견을 가져왔을떄 ses 정보가 다있어야함.
+		log.info("로그인 세션 >>>>>>>>>>>>>>>>>>>1"+ses.toString());
+		
+	}
+
+}

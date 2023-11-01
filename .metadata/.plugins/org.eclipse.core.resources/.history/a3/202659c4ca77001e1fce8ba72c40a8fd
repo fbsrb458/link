@@ -1,0 +1,83 @@
+package com.myweb.www.controller;
+
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.xmlbeans.impl.xb.xsdschema.Public;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.myweb.www.domain.BoardVO;
+import com.myweb.www.security.MemberVO;
+import com.myweb.www.service.MemberService;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@RequestMapping("/member/**")
+@Controller
+public class MemberController {
+	
+	@Inject
+	private BCryptPasswordEncoder bcEncoder;
+	
+	@Inject
+	private MemberService msv;
+	
+	
+	@GetMapping("/register")
+	public void register() {}
+	
+	
+	
+	@PostMapping("/register")
+	public String register(MemberVO mvo) {
+		mvo.setPwd(bcEncoder.encode(mvo.getPwd()));
+		int isOk = msv.register(mvo);
+		return "index";
+	}
+	
+	@GetMapping("/login")
+	public void login() {}
+	
+	
+	@PostMapping("/login")
+	public String loginPost(HttpServletRequest request,
+			RedirectAttributes re) {
+		//로그인 실패시 다시 로그인 페이지로 돌아와 오류 메시지 전송
+		//디사 로그인 유도
+		log.info("컨트롤러 로그인"+request.getAttribute("errMsg"));
+		re.addAttribute("errMsg", request.getAttribute("errMsg"));
+		re.addAttribute("email", request.getAttribute("email"));
+		return "redirect:/member/login";
+	}
+	
+	@GetMapping("list")
+	public String getList(Model m) {
+		List<MemberVO> memList = msv.getList();
+		m.addAttribute("memList", memList);
+		log.info("member list"+memList);
+
+		
+		return "/member/list";
+	}
+	
+	@GetMapping({"/detail", "/modify"})
+	public String getdetail(Model m, @RequestParamString email){
+		log.info("member getdetail"+email);
+		MemberVO mvo = msv.getdetail(email);
+		m.addAttribute("mvo" , mvo);
+		
+	}
+	
+	
+	
+}

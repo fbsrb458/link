@@ -1,0 +1,8 @@
+package com.myweb.www.domain;
+
+public class Snippet {
+	public static void main(String[] args) {
+		bcPasswordEncoder
+	}
+}
+

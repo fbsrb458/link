@@ -1,0 +1,161 @@
+package com.myweb.www.service;
+
+import java.util.List;
+
+import javax.inject.Inject;
+
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
+
+import com.myweb.www.domain.BoardDTO;
+import com.myweb.www.domain.BoardVO;
+import com.myweb.www.domain.FileVO;
+import com.myweb.www.domain.PagingVO;
+import com.myweb.www.repository.BoardDAO;
+import com.myweb.www.repository.CommentDAO;
+import com.myweb.www.repository.FileDAO;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Service
+public class BoardServiceImpl implements BoardService{
+	
+	
+	@Inject
+	private BoardDAO bdao;
+	
+	
+	@Inject
+	private FileDAO fdao;
+	
+	@Inject
+	private CommentDAO cdao;
+	
+//	@Override
+//	public int register(BoardVO bvo) {
+//		log.info("register 2");
+//		return bdao.insert(bvo);
+//	}
+
+	@Override
+	public List<BoardVO> getList(PagingVO pagingVO) {
+		log.info("getList 2");
+		bdao.Comentcount(bdao);
+		bdao.Filecount(bdao);
+		return bdao.getList(pagingVO);
+	}
+
+	@Override
+	public BoardVO getDetail(long bno) {
+		log.info("getDetail 2");
+		return bdao.getDetail(bno);
+	}
+	
+	@Transactional
+	@Override
+	public int modify(BoardVO bvo) {
+		log.info("modify 2");
+		return bdao.update(bvo);
+	}
+	
+	@Transactional
+	@Override
+	public int remove(int bno) {
+	
+		
+		fdao.fileremove(bno);
+		cdao.commentremove(bno);
+		return bdao.remove(bno);
+	}
+
+	@Override
+	public int getTotalCount(PagingVO pagingVO) {
+		log.info("getTotalCount 2");
+		return bdao.getTotalCount(pagingVO);
+	}
+
+	@Transactional
+	@Override
+	public int register(BoardDTO bdto) {
+		log.info("insert 2");
+		//bvo, flist 가져와서 각자 db에 저장
+		//기존 메서드 활용
+		int isUp = bdao.insert(bdto.getBvo());
+		//null 처리
+		
+		if(bdto.getFlist() == null) {
+			isUp *= 1;
+			return isUp;
+		}
+		
+		//bvo insert 후 파일도 있다면...
+		if(isUp > 0 && bdto.getFlist().size() > 0 ) {
+			long bno = bdao.selectOneBno(); //가장 마지막에 등록된 bno
+			//모든 파일에 bno set 
+			for(FileVO fvo : bdto.getFlist()) {
+				fvo.setBno(bno);
+				isUp *= fdao.insertFile(fvo);
+			}
+		}
+	
+		return isUp;
+	}
+
+	@Override
+	public BoardDTO getDetail2(long bno) {
+		log.info("getDetail2 2!");
+		BoardDTO  bdto = new BoardDTO();
+		BoardVO bvo = bdao.getDetail(bno);
+		bdto.setBvo(bvo);
+		bdto.setBvo(bdao.getDetail(bno)); //bdao bvo 호출
+		bdto.setFlist(fdao.getDetailFile(bno));
+		return bdto;
+	}
+
+	@Override
+	public int removeFile(String uuid) {
+		log.info("removeFile 2");
+		return fdao.removeFile(uuid);
+	}
+
+	@Override
+	public int modifyFile(BoardDTO bdto) {
+		log.info("modifyFile 2");
+		int isOk = bdao.update(bdto.getBvo()); //기존 bvo update
+		if(bdto.getFlist() == null ) {
+			isOk *= 1;
+			return isOk;
+		}else {
+			if(isOk > 0 && bdto.getFlist().size() > 0) {
+				long bno = bdto.getBvo().getBno();
+				//모든 fvo에 bno set
+				for(FileVO fvo : bdto.getFlist()) {
+					fvo.setBno(bno);
+					isOk *= fdao.insertFile(fvo);
+				}
+			}
+		}
+		return isOk;
+	}
+	
+	
+//	@Override
+//	public BoardDTO getDetail2(long bno) {
+//		log.info("getDetail2 2!");
+//		BoardDTO  bdto = new BoardDTO();
+//		bdao.readCount(bno, 1);
+//		BoardVO bvo = bdao.getDetail(bno);
+//		bdto.setBvo(bvo);
+//		//파일 list 가져온 다음 BoardDTO로 만들어 리턴
+//		List<FileVO> list = fdao.getFileList(bno);
+//		bdto.setFlist(list);
+//		bdto.setBvo(bdao.getDetail(bno)); //bdao bvo 호출
+//		bdto.setFlist(fdao.getDetailFile(bno));
+//		return bdto;
+//	}
+
+	
+}

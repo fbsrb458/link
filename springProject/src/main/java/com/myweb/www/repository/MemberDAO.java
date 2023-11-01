@@ -1,0 +1,33 @@
+package com.myweb.www.repository;
+
+import java.util.List;
+
+import org.springframework.ui.Model;
+
+import com.myweb.www.domain.BoardVO;
+import com.myweb.www.security.AuthVO;
+import com.myweb.www.security.MemberVO;
+
+public interface MemberDAO {
+
+	int insertMember(MemberVO mvo);
+
+	int insertAuthInit(String email);
+
+	MemberVO selectEmail(String username);
+
+	List<AuthVO> selectAuths(String username);
+
+	int updateLestLogin(String authEmail);
+
+	List<MemberVO> getList();
+
+	int modifyPwdEmpty(MemberVO mvo);
+
+	int modify(MemberVO mvo);
+
+	int remove(String email);
+
+	void removeAuth(String email);
+
+}
